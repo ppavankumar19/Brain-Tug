@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MindRope — Math & Physics Tug-of-War</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background:#0b1020; color:#e8ecff; }
+    header { padding: 28px 18px; text-align:center; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    p { margin: 6px 0; opacity: .9; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; margin: 14px 0; }
+    label { display:block; margin: 10px 0 6px; opacity:.9; }
+    input, select, button { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color:#e8ecff; }
+    button { cursor:pointer; font-weight:700; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .row > div { flex: 1; min-width: 220px; }
+    .note { font-size: 13px; opacity: .85; }
+    .ok { color: #8dffb0; }
+    .err { color: #ff9aa5; }
+    code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MindRope</h1>
+    <p>Math & Physics Tug-of-War Quiz</p>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin:0 0 8px;">1) Connect Supabase</h2>
+      <p class="note">
+        Paste your <b>Project URL</b> and <b>anon key</b> from Supabase → Settings → API.
+        (Anon key is safe to use on client with RLS enabled.)
+      </p>
+
+      <div class="row">
+        <div>
+          <label>Supabase URL</label>
+          <input id="sbUrl" placeholder="https://xxxx.supabase.co" />
+        </div>
+        <div>
+          <label>Supabase anon key</label>
+          <input id="sbKey" placeholder="eyJhbGciOi..." />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>Category</label>
+          <select id="category">
+            <option value="mathematics">Mathematics</option>
+            <option value="physics">Physics</option>
+          </select>
+        </div>
+        <div>
+          <label>How many questions (min 10 for test)</label>
+          <input id="limit" type="number" min="1" value="10" />
+        </div>
+      </div>
+
+      <button id="testBtn" style="margin-top:12px;">Test Fetch Questions</button>
+      <p id="status" class="note" style="margin-top:10px;"></p>
+      <pre id="out" style="white-space:pre-wrap; background:rgba(0,0,0,.25); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.08); display:none;"></pre>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px;">2) Next steps</h2>
+      <ul class="note">
+        <li>Run the SQL schema in Supabase (we’ll add <code>supabase-setup.sql</code> next).</li>
+        <li>Once fetch works, we’ll build the full game UI step-by-step.</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+  async function fetchQuestions({ url, key, category, limit }) {
+    const endpoint = `${url}/rest/v1/questions?select=id,question_text,option_a,option_b,option_c,option_d,correct_answer,difficulty&category=eq.${encodeURIComponent(category)}&limit=${encodeURIComponent(limit)}`;
+    const res = await fetch(endpoint, {
+      headers: {
+        "apikey": key,
+        "Authorization": "Bearer " + key,
+        "Content-Type": "application/json"
+      }
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
+    return res.json();
+  }
+
+  const statusEl = document.getElementById("status");
+  const outEl = document.getElementById("out");
+  document.getElementById("testBtn").addEventListener("click", async () => {
+    outEl.style.display = "none";
+    outEl.textContent = "";
+    statusEl.textContent = "Testing...";
+    statusEl.className = "note";
+
+    const url = document.getElementById("sbUrl").value.trim();
+    const key = document.getElementById("sbKey").value.trim();
+    const category = document.getElementById("category").value;
+    const limit = Number(document.getElementById("limit").value || 10);
+
+    try {
+      if (!url || !key) throw new Error("Missing Supabase URL or anon key.");
+      const data = await fetchQuestions({ url, key, category, limit });
+      statusEl.textContent = `✅ Success. Fetched ${data.length} questions from '${category}'.`;
+      statusEl.className = "note ok";
+      outEl.style.display = "block";
+      outEl.textContent = JSON.stringify(data.slice(0, 3), null, 2) + (data.length > 3 ? "\n...\n" : "");
+    } catch (e) {
+      statusEl.textContent = `❌ ${e.message}`;
+      statusEl.className = "note err";
+    }
+  });
+</script>
+</body>
+</html>
