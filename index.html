@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Brain Battle - Dual Quiz Tug-of-War</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        /* Welcome Screen */
+        #welcomeScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .title {
+            font-size: 4rem;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .subject-buttons {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .subject-btn {
+            padding: 30px 60px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subject-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .subject-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .subject-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .math-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .physics-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        /* Game Screen */
+        #gameScreen {
+            display: none;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .game-header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .new-game-btn {
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .new-game-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        /* Game Area */
+        .game-area {
+            display: flex;
+            height: calc(100vh - 80px);
+            position: relative;
+        }
+
+        /* Left and Right Sides */
+        .side {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .left-side {
+            background: rgba(245, 87, 108, 0.1);
+        }
+
+        .right-side {
+            background: rgba(74, 172, 254, 0.1);
+        }
+
+        .question-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .question-number {
+            font-size: 1rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .timer.warning {
+            color: #f5576c;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .answer-btn {
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .answer-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .answer-btn.correct {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+            animation: correctPulse 0.5s ease;
+        }
+
+        .answer-btn.wrong {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .streak-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: none;
+            animation: bounceIn 0.5s ease;
+        }
+
+        .streak-indicator.active {
+            display: block;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Middle Tug-of-War */
+        .tug-container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            z-index: 10;
+        }
+
+        .tug-display {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .rope-container {
+            width: 100%;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .rope-position {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: left 0.5s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tug-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .tug-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .side-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: bold;
+        }
+
+        /* Power-ups */
+        .powerups {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        .powerup-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .powerup-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+        }
+
+        .powerup-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .powerup-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Victory Screen */
+        #victoryScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .victory-content {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: victoryPop 0.5s ease;
+        }
+
+        @keyframes victoryPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .victory-title {
+            font-size: 3rem;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+
+        .victory-message {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .victory-stats {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .victory-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .victory-stat:last-child {
+            border-bottom: none;
+        }
+
+        .victory-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .victory-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .play-again-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .change-subject-btn {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        /* Loading State */
+        .loading {
+            display: none;
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f093fb;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .game-area {
+                flex-direction: column;
+            }
+
+            .tug-container {
+                position: relative;
+                width: 200px;
+                margin: 20px auto;
+                left: 0;
+                top: 0;
+                transform: none;
+            }
+
+            .side {
+                height: 50vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .subject-btn {
+                padding: 20px 40px;
+                font-size: 1.3rem;
+            }
+
+            .question-text {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen">
+        <h1 class="title">🎮 Brain Battle</h1>
+        <p class="subtitle">Challenge yourself with dual-screen quiz action!</p>
+        <div class="subject-buttons">
+            <button class="subject-btn math-btn" id="mathBtn">
+                📐 Mathematics
+            </button>
+            <button class="subject-btn physics-btn" id="physicsBtn">
+                ⚛️ Physics
+            </button>
+        </div>
+        <div class="loading" id="loadingIndicator">Loading questions...</div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen">
+        <div class="game-header">
+            <div class="game-title" id="gameSubject">Mathematics</div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Progress</span>
+                    <span class="stat-value" id="progressStat">0/14</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracyStat">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Streak</span>
+                    <span class="stat-value" id="streakStat">0</span>
+                </div>
+            </div>
+            <button class="new-game-btn" id="newGameBtn">New Game</button>
+        </div>
+
+        <div class="game-area">
+            <!-- Left Side -->
+            <div class="side left-side">
+                <div class="question-container">
+                    <div class="streak-indicator" id="leftStreak">🔥 STREAK!</div>
+                    <div class="question-header">
+                        <span class="question-number" id="leftQuestionNum">Question 1/7</span>
+                        <div class="timer" id="leftTimer">⏱️ <span id="leftTime">30</span>s</div>
+                    </div>
+                    <div class="question-text" id="leftQuestion">Loading...</div>
+                    <input type="text" class="answer-input" id="leftInput" placeholder="Type your answer..." />
+                    <div class="answer-buttons" id="leftAnswers"></div>
+                </div>
+            </div>
+
+            <!-- Middle Tug-of-War -->
+            <div class="tug-container">
+                <div class="tug-display">
+                    <div class="tug-label">Tug Score</div>
+                    <div class="tug-score" id="tugScore">0</div>
+                    <div class="rope-container">
+                        <div class="rope-position" id="ropePosition"></div>
+                    </div>
+                    <div class="side-labels">
+                        <span>LEFT</span>
+                        <span>RIGHT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="side right-side">
+                <div class="question-container">
+                    <div class="streak-indicator" id="rightStreak">🔥 STREAK!</div>
+                    <div class="question-header">
+                        <span class="question-number" id="rightQuestionNum">Question 1/7</span>
+                        <div class="timer" id="rightTimer">⏱️ <span id="rightTime">30</span>s</div>
+                    </div>
+                    <div class="question-text" id="rightQuestion">Loading...</div>
+                    <input type="text" class="answer-input" id="rightInput" placeholder="Type your answer..." />
+                    <div class="answer-buttons" id="rightAnswers"></div>
+                </div>
+            </div>
+
+            <!-- Power-ups -->
+            <div class="powerups">
+                <button class="powerup-btn" id="freezePowerup" title="Freeze Timer">
+                    ❄️
+                    <span class="powerup-count" id="freezeCount">0</span>
+                </button>
+                <button class="powerup-btn" id="doublePowerup" title="Double Points">
+                    ⚡
+                    <span class="powerup-count" id="doubleCount">0</span>
+                </button>
+                <button class="powerup-btn" id="skipPowerup" title="Skip Question">
+                    ⏭️
+                    <span class="powerup-count" id="skipCount">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victoryScreen">
+        <div class="victory-content">
+            <h2 class="victory-title" id="victoryTitle">🏆 Victory!</h2>
+            <p class="victory-message" id="victoryMessage">Congratulations!</p>
+            <div class="victory-stats" id="victoryStats"></div>
+            <div class="victory-actions">
+                <button class="victory-btn play-again-btn" id="playAgainBtn">Play Again</button>
+                <button class="victory-btn change-subject-btn" id="changeSubjectBtn">Change Subject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        const SUPABASE_URL = 'https://rqipjerxjvrvwjybhsqm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxaXBqZXJ4anZydndqeWJoc3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzg4MzUsImV4cCI6MjA4Njc1NDgzNX0.wsHGttO_KFuCSXaGqrmWMhktqHX0hUgd8JRVqqS9gGc';
+
+        const CONFIG = {
+            QUESTIONS_PER_SIDE: 7,
+            TIME_PER_QUESTION: 30,
+            STREAK_BONUS_THRESHOLD: 3,
+            TUG_POINTS_CORRECT: 10,
+            TUG_POINTS_WRONG: -5,
+            SPEED_BONUS_TIME: 10,
+            STREAK_BONUS_POINTS: 5
+        };
+
+        // ==================== GLOBAL STATE ====================
+        let supabaseClient = null;
+        let currentSubject = '';
+        let questions = [];
+        let gameState = {
+            left: {
+                questions: [],
+                currentIndex: 0,
+                score: 0,
+                streak: 0,
+                correctAnswers: 0,
+                totalAnswers: 0,
+                timer: null,
+                timeLeft: CONFIG.TIME_PER_QUESTION
+            },
+            right: {
+                questions: [],
+                currentIndex: 0,
+                score: 0,
+                streak: 0,
+                correctAnswers: 0,
+                totalAnswers: 0,
+                timer: null,
+                timeLeft: CONFIG.TIME_PER_QUESTION
+            },
+            tugScore: 0,
+            powerups: { freeze: 0, double: 0, skip: 0 },
+            activePowerup: null,
+            gameStartTime: null
+        };
+
+        // ==================== INITIALIZATION ====================
+        function initSupabase() {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize Supabase:', error);
+                alert('Failed to connect to database. Please check your configuration.');
+                return false;
+            }
+        }
+
+        // ==================== GAME FLOW ====================
+        async function startGame(subject) {
+            currentSubject = subject;
+            document.getElementById('loadingIndicator').classList.add('active');
+
+            try {
+                await loadQuestions(subject);
+                initializeGame();
+                showScreen('gameScreen');
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Failed to load questions. Please try again.');
+                document.getElementById('loadingIndicator').classList.remove('active');
+            }
+        }
+
+        async function loadQuestions(subject) {
+            const { data, error } = await supabaseClient
+                .from('questions')
+                .select('*')
+                .eq('subject', subject)
+                .order('difficulty', { ascending: true });
+
+            if (error) throw error;
+
+            if (!data || data.length < CONFIG.QUESTIONS_PER_SIDE * 2) {
+                throw new Error('Not enough questions available');
+            }
+
+            // Shuffle and split questions
+            questions = shuffleArray(data);
+            gameState.left.questions = questions.slice(0, CONFIG.QUESTIONS_PER_SIDE);
+            gameState.right.questions = questions.slice(CONFIG.QUESTIONS_PER_SIDE, CONFIG.QUESTIONS_PER_SIDE * 2);
+        }
+
+        function initializeGame() {
+            document.getElementById('gameSubject').textContent = currentSubject;
+            gameState.left.currentIndex = 0;
+            gameState.right.currentIndex = 0;
+            gameState.left.score = 0;
+            gameState.right.score = 0;
+            gameState.left.streak = 0;
+            gameState.right.streak = 0;
+            gameState.left.correctAnswers = 0;
+            gameState.right.correctAnswers = 0;
+            gameState.left.totalAnswers = 0;
+            gameState.right.totalAnswers = 0;
+            gameState.tugScore = 0;
+            gameState.powerups = { freeze: 1, double: 1, skip: 1 };
+            gameState.activePowerup = null;
+            gameState.gameStartTime = Date.now();
+
+            updatePowerupDisplay();
+            displayQuestion('left');
+            displayQuestion('right');
+            updateStats();
+            updateTugOfWar();
+        }
+
+        // ==================== QUESTION DISPLAY ====================
+        function displayQuestion(side) {
+            const state = gameState[side];
+            if (state.currentIndex >= state.questions.length) {
+                checkGameEnd();
+                return;
+            }
+
+            const question = state.questions[state.currentIndex];
+            const allAnswers = shuffleArray([question.correct_answer, ...question.wrong_answers]);
+
+            document.getElementById(`${side}QuestionNum`).textContent = 
+                `Question ${state.currentIndex + 1}/${CONFIG.QUESTIONS_PER_SIDE}`;
+            document.getElementById(`${side}Question`).textContent = question.question;
+            document.getElementById(`${side}Input`).value = '';
+
+            // Display answer buttons
+            const answersContainer = document.getElementById(`${side}Answers`);
+            answersContainer.innerHTML = '';
+            allAnswers.forEach(answer => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = answer;
+                btn.onclick = () => submitAnswer(side, answer);
+                answersContainer.appendChild(btn);
+            });
+
+            // Start timer
+            startTimer(side);
+
+            // Setup enter key for input
+            const input = document.getElementById(`${side}Input`);
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    submitAnswer(side, input.value);
+                }
+            };
+        }
+
+        function startTimer(side) {
+            const state = gameState[side];
+            clearInterval(state.timer);
+            state.timeLeft = CONFIG.TIME_PER_QUESTION;
+
+            updateTimerDisplay(side);
+
+            state.timer = setInterval(() => {
+                state.timeLeft--;
+                updateTimerDisplay(side);
+
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timer);
+                    submitAnswer(side, null); // Time's up
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(side) {
+            const timeElement = document.getElementById(`${side}Time`);
+            const timerElement = document.getElementById(`${side}Timer`);
+            
+            timeElement.textContent = gameState[side].timeLeft;
+            
+            if (gameState[side].timeLeft <= 10) {
+                timerElement.classList.add('warning');
+            } else {
+                timerElement.classList.remove('warning');
+            }
+        }
+
+        // ==================== ANSWER SUBMISSION ====================
+        function submitAnswer(side, userAnswer) {
+            const state = gameState[side];
+            const question = state.questions[state.currentIndex];
+            
+            clearInterval(state.timer);
+
+            const isCorrect = userAnswer && 
+                userAnswer.trim().toLowerCase() === question.correct_answer.trim().toLowerCase();
+
+            state.totalAnswers++;
+
+            if (isCorrect) {
+                handleCorrectAnswer(side);
+            } else {
+                handleWrongAnswer(side);
+            }
+
+            // Visual feedback
+            highlightAnswer(side, question.correct_answer, isCorrect);
+
+            // Move to next question after delay
+            setTimeout(() => {
+                state.currentIndex++;
+                displayQuestion(side);
+            }, 1500);
+        }
+
+        function handleCorrectAnswer(side) {
+            const state = gameState[side];
+            state.correctAnswers++;
+            state.streak++;
+
+            let points = CONFIG.TUG_POINTS_CORRECT;
+
+            // Speed bonus
+            if (state.timeLeft > CONFIG.TIME_PER_QUESTION - CONFIG.SPEED_BONUS_TIME) {
+                points += 3;
+            }
+
+            // Streak bonus
+            if (state.streak >= CONFIG.STREAK_BONUS_THRESHOLD) {
+                points += CONFIG.STREAK_BONUS_POINTS;
+                document.getElementById(`${side}Streak`).classList.add('active');
+            }
+
+            // Double powerup
+            if (gameState.activePowerup === 'double') {
+                points *= 2;
+                gameState.activePowerup = null;
+            }
+
+            state.score += points;
+
+            // Update tug score
+            if (side === 'left') {
+                gameState.tugScore -= points;
+            } else {
+                gameState.tugScore += points;
+            }
+
+            updateTugOfWar();
+            updateStats();
+            playSound('correct');
+        }
+
+        function handleWrongAnswer(side) {
+            const state = gameState[side];
+            state.streak = 0;
+            document.getElementById(`${side}Streak`).classList.remove('active');
+
+            let penalty = CONFIG.TUG_POINTS_WRONG;
+
+            // Update tug score
+            if (side === 'left') {
+                gameState.tugScore -= penalty;
+            } else {
+                gameState.tugScore += penalty;
+            }
+
+            updateTugOfWar();
+            updateStats();
+            playSound('wrong');
+        }
+
+        function highlightAnswer(side, correctAnswer, wasCorrect) {
+            const buttons = document.querySelectorAll(`#${side}Answers .answer-btn`);
+            buttons.forEach(btn => {
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (btn.textContent === document.getElementById(`${side}Input`).value && !wasCorrect) {
+                    btn.classList.add('wrong');
+                }
+                btn.disabled = true;
+            });
+        }
+
+        // ==================== TUG OF WAR ====================
+        function updateTugOfWar() {
+            const tugScoreElement = document.getElementById('tugScore');
+            const ropeElement = document.getElementById('ropePosition');
+
+            tugScoreElement.textContent = gameState.tugScore;
+
+            // Calculate rope position (0-100%)
+            const maxScore = 140; // Maximum possible score difference
+            const percentage = ((gameState.tugScore + maxScore) / (maxScore * 2)) * 100;
+            const clampedPercentage = Math.max(0, Math.min(100, percentage));
+
+            ropeElement.style.left = `calc(${clampedPercentage}% - 20px)`;
+
+            // Check for victory
+            if (Math.abs(gameState.tugScore) >= 50) {
+                setTimeout(() => endGameWithVictory(), 1000);
+            }
+        }
+
+        // ==================== STATS UPDATE ====================
+        function updateStats() {
+            const totalAnswered = gameState.left.totalAnswers + gameState.right.totalAnswers;
+            const totalCorrect = gameState.left.correctAnswers + gameState.right.correctAnswers;
+            const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+            const maxStreak = Math.max(gameState.left.streak, gameState.right.streak);
+
+            document.getElementById('progressStat').textContent = 
+                `${totalAnswered}/${CONFIG.QUESTIONS_PER_SIDE * 2}`;
+            document.getElementById('accuracyStat').textContent = `${accuracy}%`;
+            document.getElementById('streakStat').textContent = maxStreak;
+        }
+
+        // ==================== POWER-UPS ====================
+        function usePowerup(type) {
+            if (gameState.powerups[type] <= 0) return;
+
+            gameState.powerups[type]--;
+            updatePowerupDisplay();
+
+            switch(type) {
+                case 'freeze':
+                    gameState.activePowerup = 'freeze';
+                    clearInterval(gameState.left.timer);
+                    clearInterval(gameState.right.timer);
+                    setTimeout(() => {
+                        startTimer('left');
+                        startTimer('right');
+                        gameState.activePowerup = null;
+                    }, 5000);
+                    break;
+
+                case 'double':
+                    gameState.activePowerup = 'double';
+                    break;
+
+                case 'skip':
+                    const skipSide = gameState.left.timeLeft < gameState.right.timeLeft ? 'left' : 'right';
+                    gameState[skipSide].currentIndex++;
+                    displayQuestion(skipSide);
+                    break;
+            }
+        }
+
+        function updatePowerupDisplay() {
+            document.getElementById('freezeCount').textContent = gameState.powerups.freeze;
+            document.getElementById('doubleCount').textContent = gameState.powerups.double;
+            document.getElementById('skipCount').textContent = gameState.powerups.skip;
+
+            document.getElementById('freezePowerup').disabled = gameState.powerups.freeze <= 0;
+            document.getElementById('doublePowerup').disabled = gameState.powerups.double <= 0;
+            document.getElementById('skipPowerup').disabled = gameState.powerups.skip <= 0;
+        }
+
+        // ==================== GAME END ====================
+        function checkGameEnd() {
+            if (gameState.left.currentIndex >= CONFIG.QUESTIONS_PER_SIDE &&
+                gameState.right.currentIndex >= CONFIG.QUESTIONS_PER_SIDE) {
+                endGameWithVictory();
+            }
+        }
+
+        function endGameWithVictory() {
+            clearInterval(gameState.left.timer);
+            clearInterval(gameState.right.timer);
+
+            const totalTime = Math.round((Date.now() - gameState.gameStartTime) / 1000);
+            const totalCorrect = gameState.left.correctAnswers + gameState.right.correctAnswers;
+            const totalAnswers = CONFIG.QUESTIONS_PER_SIDE * 2;
+            const accuracy = Math.round((totalCorrect / totalAnswers) * 100);
+            const winner = gameState.tugScore > 0 ? 'Right Side' : gameState.tugScore < 0 ? 'Left Side' : 'Tie';
+
+            document.getElementById('victoryTitle').textContent = 
+                winner === 'Tie' ? '🤝 Tie Game!' : `🏆 ${winner} Wins!`;
+            document.getElementById('victoryMessage').textContent = 
+                'Amazing performance! Here are your stats:';
+
+            const statsHTML = `
+                <div class="victory-stat">
+                    <span>Total Score:</span>
+                    <strong>${Math.abs(gameState.tugScore)}</strong>
+                </div>
+                <div class="victory-stat">
+                    <span>Accuracy:</span>
+                    <strong>${accuracy}%</strong>
+                </div>
+                <div class="victory-stat">
+                    <span>Correct Answers:</span>
+                    <strong>${totalCorrect}/${totalAnswers}</strong>
+                </div>
+                <div class="victory-stat">
+                    <span>Time Taken:</span>
+                    <strong>${totalTime}s</strong>
+                </div>
+                <div class="victory-stat">
+                    <span>Best Streak:</span>
+                    <strong>${Math.max(gameState.left.streak, gameState.right.streak)}</strong>
+                </div>
+            `;
+
+            document.getElementById('victoryStats').innerHTML = statsHTML;
+            document.getElementById('victoryScreen').style.display = 'flex';
+
+            createConfetti();
+            saveScore(accuracy, totalTime);
+        }
+
+        async function saveScore(accuracy, timeTaken) {
+            try {
+                const { error } = await supabaseClient
+                    .from('game_scores')
+                    .insert({
+                        subject: currentSubject,
+                        score: Math.abs(gameState.tugScore),
+                        accuracy: accuracy,
+                        time_taken: timeTaken,
+                        streak_best: Math.max(gameState.left.streak, gameState.right.streak)
+                    });
+
+                if (error) console.error('Error saving score:', error);
+            } catch (err) {
+                console.error('Failed to save score:', err);
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameState.left.timer);
+            clearInterval(gameState.right.timer);
+            showScreen('welcomeScreen');
+        }
+
+        function playAgain() {
+            document.getElementById('victoryScreen').style.display = 'none';
+            startGame(currentSubject);
+        }
+
+        function changeSubject() {
+            document.getElementById('victoryScreen').style.display = 'none';
+            showScreen('welcomeScreen');
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showScreen(screenId) {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('loadingIndicator').classList.remove('active');
+            document.getElementById(screenId).style.display = screenId === 'gameScreen' ? 'block' : 'flex';
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function playSound(type) {
+            // Create simple beep sounds
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = type === 'correct' ? 800 : 400;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function createConfetti() {
+            const colors = ['#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#ffd700'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function setupEventListeners() {
+            // Subject buttons
+            document.getElementById('mathBtn').addEventListener('click', () => startGame('Mathematics'));
+            document.getElementById('physicsBtn').addEventListener('click', () => startGame('Physics'));
+            
+            // New game button
+            document.getElementById('newGameBtn').addEventListener('click', endGame);
+            
+            // Power-ups
+            document.getElementById('freezePowerup').addEventListener('click', () => usePowerup('freeze'));
+            document.getElementById('doublePowerup').addEventListener('click', () => usePowerup('double'));
+            document.getElementById('skipPowerup').addEventListener('click', () => usePowerup('skip'));
+            
+            // Victory screen buttons
+            document.getElementById('playAgainBtn').addEventListener('click', playAgain);
+            document.getElementById('changeSubjectBtn').addEventListener('click', changeSubject);
+        }
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            if (initSupabase()) {
+                setupEventListeners();
+                console.log('Brain Battle initialized successfully!');
+            }
+        });
+    </script>
+</body>
+</html>
