@@ -337,7 +337,7 @@ netlify deploy --prod
 6. Save
 7. Your site: `https://username.github.io/brain-battle/brain-battle.html`
 
-**Pro Tip:** Rename to `index.html` for cleaner URL: `https://username.github.io/brain-battle/`
+**Pro Tip:** Rename to `index.html` for a cleaner URL: `https://username.github.io/brain-battle/`
 
 #### Option D: Cloudflare Pages
 
@@ -363,12 +363,12 @@ npm install -g firebase-tools
 # Login
 firebase login
 
-# Initialize project
+# Initialise project
 firebase init hosting
 
 # Select:
 # - Use existing project or create new
-# - Public directory: .
+# - Public directory:.
 # - Single-page app: No
 # - Set up automatic builds: No
 
@@ -408,7 +408,7 @@ surge --domain brain-battle.surge.sh
 ### During Gameplay
 1. **Answer Simultaneously**: Both sides show different questions
 2. **Type or Click**: 
-   - Type answer and press Enter
+   - Type your answer and press Enter
    - OR click one of the four answer buttons
 3. **Watch the Timer**: 30 seconds per question
 4. **Monitor the Rope**: Middle of screen shows tug-of-war progress
@@ -418,7 +418,7 @@ surge --domain brain-battle.surge.sh
 ### Controls
 - **Keyboard**: Type answers, press Enter
 - **Touch/Click**: Tap answer buttons
-- **Power-ups**: Click icons at bottom center
+- **Power-ups**: Click icons at the bottom centre
 - **New Game**: Header button anytime
 
 ### Scoring System
@@ -471,7 +471,7 @@ INSERT INTO questions (subject, question, correct_answer, wrong_answers, difficu
 ### Modifying Game Difficulty
 
 **Edit Configuration** (lines 14-20):
-```javascript
+```JavaScript
 const CONFIG = {
     QUESTIONS_PER_SIDE: 7,        // Change to 10 for longer games
     TIME_PER_QUESTION: 30,        // Change to 20 for harder, 45 for easier
@@ -484,14 +484,14 @@ const CONFIG = {
 ```
 
 ### Adding More Questions
-Just add to Supabase questions table:
+Just add to the Supabase questions table:
 - **subject**: Match existing subjects
 - **difficulty**: 1 (Easy), 2 (Medium), 3 (Hard), 4 (Expert)
-- **wrong_answers**: Must be array of exactly 3 strings
+- **wrong_answers**: Must be an array of exactly 3 strings
 
 ### Changing Visual Theme
 
-**Color Scheme** (lines 10-15):
+**Colour Scheme** (lines 10-15):
 ```css
 body {
     background: linear-gradient(135deg, #YOUR_COLOR 0%, #YOUR_COLOR2 100%);
@@ -505,13 +505,13 @@ body {
 ### Disabling Features
 
 **Remove Power-Ups** (line ~540):
-```javascript
+```JavaScript
 gameState.powerups = { freeze: 0, double: 0, skip: 0 }; // Set all to 0
 ```
 
 **Remove Timers** (line ~360):
 Comment out timer start:
-```javascript
+```JavaScript
 // startTimer(side);
 ```
 
@@ -575,7 +575,7 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 **Problem**: "Loading questions..." never completes
 
 **Solutions**:
-1. Check browser console (F12) for errors
+1. Check the browser console (F12) for errors
 2. Verify Supabase credentials in code
 3. Test Supabase connection:
    ```javascript
@@ -583,7 +583,7 @@ WHERE created_at < NOW() - INTERVAL '30 days';
    console.log('Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
    ```
 4. Check RLS policies in Supabase
-5. Verify questions table has data
+5. Verify the questions table has data
 
 ### Supabase Connection Failed
 
@@ -591,7 +591,7 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 
 **Solutions**:
 1. Check internet connection
-2. Verify Supabase project is active (not paused)
+2. Verify the Supabase project is active (not paused)
 3. Test URL in browser: `https://your-url.supabase.co`
 4. Regenerate API key if needed (Settings → API)
 
@@ -600,10 +600,10 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 **Problem**: Site not loading after deployment
 
 **Solutions**:
-1. Check file is named correctly
+1. Check the file is named correctly
 2. Clear browser cache (Ctrl+F5)
 3. Check deployment logs for errors
-4. Verify Supabase URL/key are correct
+4. Verify the Supabase URL/key are correct
 5. For GitHub Pages: Enable HTTPS in settings
 
 ### Performance Issues
@@ -613,7 +613,7 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 **Solutions**:
 1. Reduce animations in CSS
 2. Limit confetti count (line ~850)
-3. Optimize question queries
+3. Optimise question queries
 4. Use CDN for Supabase SDK
 5. Check browser dev tools → Performance tab
 
@@ -622,16 +622,16 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 **Problem**: Timer doesn't count down
 
 **Solutions**:
-1. Check JavaScript console for errors
-2. Verify browser supports setInterval
-3. Test in different browser
+1. Check the JavaScript console for errors
+2. Verify the browser supports setInterval
+3. Test in a different browser
 4. Clear browser cache
 
 ### Mobile Display Issues
 
 **Problem**: Layout broken on mobile
 
-**Note**: This game is optimized for tablets/desktops (768px+)
+**Note**: This game is optimised for tablets/desktops (768px+)
 
 **For Mobile Support** (add to CSS):
 ```css
@@ -652,14 +652,14 @@ WHERE created_at < NOW() - INTERVAL '30 days';
 - **Question Fetch**: ~200ms
 - **Lighthouse Score**: 95+
 
-### Optimization Tips
+### Optimisation Tips
 
 **1. Reduce Initial Bundle:**
 - Supabase SDK loaded from CDN (cached)
 - No external dependencies
 - Single file = fewer requests
 
-**2. Optimize Questions:**
+**2. Optimise Questions:**
 ```sql
 -- Add composite index
 CREATE INDEX idx_questions_subject_difficulty 
@@ -667,7 +667,7 @@ ON questions(subject, difficulty);
 ```
 
 **3. Cache Questions:**
-```javascript
+```JavaScript
 // Store in localStorage after first fetch
 localStorage.setItem('questions_math', JSON.stringify(questions));
 ```
@@ -752,7 +752,7 @@ brain-battle/
 └── .gitignore          # Optional (for version control)
 ```
 
-### Code Organization (inside HTML)
+### Code Organisation (inside HTML)
 ```html
 <!DOCTYPE html>
 <html>
@@ -797,18 +797,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 A: Yes! MIT license allows commercial use.
 
 **Q: How do I add my own logo?**  
-A: Add an `<img>` tag in the header section and style with CSS.
+A: Add an `<img>` tag in the header section and style it with CSS.
 
 **Q: Can I integrate with my LMS?**  
 A: Yes! Use iframe embedding or direct link.
 
 **Q: How many questions can I add?**  
-A: Unlimited! Supabase free tier supports 500MB database.
+A: Unlimited! Supabase free tier supports a 500MB database.
 
 **Q: Can I run this offline?**  
-A: No, it requires internet for Supabase connection.
+A: No, it requires the internet for the Supabase connection.
 
-**Q: How do I backup my questions?**  
+**Q: How do I back up my questions?**  
 A: Export from Supabase: Table Editor → Questions → Export as CSV
 
 **Q: Can I host on my own server?**  
@@ -824,7 +824,7 @@ This project is perfect for:
 - **Self-Study**: Make learning fun
 
 ### Classroom Setup
-1. Deploy to school network
+1. Deploy to the school network
 2. Add curriculum-aligned questions
 3. Students access via browser
 4. Track progress in Supabase
@@ -845,8 +845,9 @@ Inspired by the need to make education engaging and fun!
 
 For questions, suggestions, or collaborations:
 - **GitHub**: Open an issue
-- **Email**: (your email)
-- **Website**: (your website)
+- **Email**: pavankumar.prrp@gmail.com
+- **Website**:
+- **LinkedIn**: www.linkedin.com/in/pavankumar19
 
 ---
 
