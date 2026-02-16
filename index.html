@@ -22,6 +22,7 @@
     .err { color: #ff9aa5; }
     code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 8px; }
     .muted { opacity:.8; }
+    .small { font-size: 12px; opacity:.8; }
   </style>
 </head>
 
@@ -67,12 +68,8 @@
       </div>
 
       <div class="row" style="margin-top:12px;">
-        <div>
-          <button id="saveBtn">Save URL & Key</button>
-        </div>
-        <div>
-          <button id="testBtn" style="opacity:.9;">Test Fetch Questions</button>
-        </div>
+        <div><button id="saveBtn">Save URL & Key</button></div>
+        <div><button id="testBtn" style="opacity:.9;">Test Fetch Questions</button></div>
       </div>
 
       <p id="status" class="note" style="margin-top:10px;"></p>
@@ -112,6 +109,7 @@
           <div id="ropeFill" style="height:100%; width:50%; background:rgba(141,255,176,0.35);"></div>
         </div>
         <p class="note" id="ropeText" style="margin-top:6px;">Rope position: 0</p>
+        <div class="small">Correct pulls RIGHT (+10). Wrong pulls LEFT (-5). Rope ends at ±5.</div>
       </div>
 
       <!-- Question -->
@@ -138,10 +136,26 @@
         </div>
       </div>
 
-      <!-- Game over -->
+      <!-- Game over + Leaderboard -->
       <div id="gameOver" style="margin-top:14px; display:none;">
         <h3 style="margin:0 0 6px;">Game Over</h3>
         <p class="note" id="finalText"></p>
+        <p class="note muted" id="saveStatus"></p>
+
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label>Your name (for leaderboard)</label>
+            <input id="playerName" placeholder="e.g., Pavan" maxlength="24" />
+          </div>
+          <div style="display:flex; align-items:end;">
+            <button id="submitScoreBtn">Submit Score</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <h4 style="margin:0 0 6px;">Top 10</h4>
+          <div id="lbBox" class="note" style="white-space:pre-wrap;"></div>
+        </div>
       </div>
     </div>
 
@@ -149,9 +163,9 @@
     <div class="card">
       <h2 style="margin:0 0 8px;">3) Notes</h2>
       <ul class="note">
-        <li>Make sure you ran <code>supabase-setup.sql</code> in Supabase SQL Editor.</li>
-        <li>If fetch fails, verify RLS policies allow public SELECT on <code>questions</code>.</li>
-        <li>Next: we’ll store sessions + leaderboard.</li>
+        <li>Run <code>supabase-setup.sql</code> in Supabase SQL Editor (tables + RLS policies).</li>
+        <li>If inserts fail with 401, fix RLS policies for <code>game_sessions</code> / <code>leaderboard</code>.</li>
+        <li>Deploy: Netlify uses <code>netlify.toml</code>, Vercel uses <code>vercel.json</code>.</li>
       </ul>
     </div>
 
@@ -182,6 +196,7 @@
   const qa = document.getElementById("qa");
   const gameOver = document.getElementById("gameOver");
   const finalText = document.getElementById("finalText");
+  const saveStatus = document.getElementById("saveStatus");
   const qMeta = document.getElementById("qMeta");
   const qText = document.getElementById("qText");
   const answerStatus = document.getElementById("answerStatus");
@@ -190,8 +205,11 @@
   const optB = document.getElementById("optB");
   const optC = document.getElementById("optC");
   const optD = document.getElementById("optD");
-
   const optButtons = Array.from(document.querySelectorAll(".optBtn"));
+
+  const playerNameEl = document.getElementById("playerName");
+  const submitScoreBtn = document.getElementById("submitScoreBtn");
+  const lbBox = document.getElementById("lbBox");
 
   // ---------- Local storage ----------
   function loadConfig() {
@@ -211,7 +229,6 @@
     localStorage.removeItem("SB_KEY");
     loadConfig();
   }
-
   loadConfig();
 
   // ---------- UI helpers ----------
@@ -219,7 +236,6 @@
     statusEl.textContent = msg;
     statusEl.className = ok ? "note ok" : "note err";
   }
-
   function showOut(text) {
     outEl.style.display = "block";
     outEl.textContent = text;
@@ -228,11 +244,9 @@
     outEl.style.display = "none";
     outEl.textContent = "";
   }
-
   function setRope(position) {
-    // position range: -5..+5 (we clamp)
     const clamped = Math.max(-5, Math.min(5, position));
-    const pct = 50 + (clamped * 10); // -5 => 0%, +5 => 100%
+    const pct = 50 + (clamped * 10);
     ropeFill.style.width = pct + "%";
     ropeText.textContent = "Rope position: " + clamped;
     return clamped;
@@ -247,11 +261,7 @@
       `&limit=${encodeURIComponent(limit)}`;
 
     const res = await fetch(endpoint, {
-      headers: {
-        apikey: key,
-        Authorization: "Bearer " + key,
-        "Content-Type": "application/json",
-      },
+      headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" },
     });
 
     if (!res.ok) {
@@ -261,17 +271,80 @@
     return res.json();
   }
 
+  async function insertGameSession({ url, key, payload }) {
+    const endpoint = `${url}/rest/v1/game_sessions`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: "Bearer " + key,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Session insert failed HTTP ${res.status}: ${text}`);
+    }
+    return res.json();
+  }
+
+  async function insertLeaderboard({ url, key, payload }) {
+    const endpoint = `${url}/rest/v1/leaderboard`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: "Bearer " + key,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Leaderboard insert failed HTTP ${res.status}: ${text}`);
+    }
+    return res.json();
+  }
+
+  async function fetchTopLeaderboard({ url, key, category, limit = 10 }) {
+    const endpoint =
+      `${url}/rest/v1/leaderboard` +
+      `?select=player_name,score,created_at` +
+      `&category=eq.${encodeURIComponent(category)}` +
+      `&order=score.desc,created_at.asc` +
+      `&limit=${encodeURIComponent(limit)}`;
+
+    const res = await fetch(endpoint, {
+      headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Leaderboard fetch failed HTTP ${res.status}: ${text}`);
+    }
+    return res.json();
+  }
+
+  function renderLeaderboardRows(rows) {
+    if (!rows || rows.length === 0) return "No scores yet. Be the first!";
+    return rows.map((r, i) => `${i + 1}. ${r.player_name} — ${r.score}`).join("\n");
+  }
+
   // ---------- Game state ----------
   let questions = [];
   let currentIndex = 0;
   let score = 0;
-  let ropePos = 0; // -5..+5
+  let ropePos = 0;
   let locked = false;
   let correctCount = 0;
   let wrongCount = 0;
 
   function shuffle(arr) {
-    // Fisher-Yates
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -288,6 +361,9 @@
     scoreText.textContent = "0";
     progressText.textContent = "0 / 0";
     ropePos = setRope(0);
+    saveStatus.textContent = "";
+    lbBox.textContent = "";
+    playerNameEl.value = "";
     optButtons.forEach(b => b.disabled = false);
   }
 
@@ -308,6 +384,7 @@
     locked = false;
     nextBtn.disabled = true;
     answerStatus.textContent = "";
+    saveStatus.textContent = "";
     optButtons.forEach(b => b.disabled = false);
 
     qMeta.textContent = `Question ${currentIndex + 1} • Difficulty ${q.difficulty ?? 1}`;
@@ -321,13 +398,52 @@
     setProgress();
   }
 
-  function endGame() {
+  async function endGame() {
     qa.style.display = "none";
     gameOver.style.display = "block";
+
     finalText.textContent =
       `Final score: ${score}. Correct: ${correctCount}, Wrong: ${wrongCount}. Rope ended at ${ropePos}.`;
 
     progressText.textContent = `${questions.length} / ${questions.length}`;
+
+    const url = localStorage.getItem("SB_URL");
+    const key = localStorage.getItem("SB_KEY");
+    const category = catEl.value;
+
+    // Save session
+    try {
+      if (!url || !key) throw new Error("Missing Supabase config.");
+      saveStatus.textContent = "Saving game session...";
+      await insertGameSession({
+        url,
+        key,
+        payload: {
+          category,
+          total_questions: questions.length,
+          correct_count: correctCount,
+          wrong_count: wrongCount,
+          score: score,
+        },
+      });
+      saveStatus.textContent = "✅ Saved to Supabase: game_sessions";
+    } catch (e) {
+      console.error(e);
+      saveStatus.textContent = "⚠️ Game finished, but session save failed. Check console.";
+    }
+
+    // Load leaderboard
+    try {
+      if (url && key) {
+        const top = await fetchTopLeaderboard({ url, key, category, limit: 10 });
+        lbBox.textContent = renderLeaderboardRows(top);
+      } else {
+        lbBox.textContent = "Paste Supabase config to load leaderboard.";
+      }
+    } catch (e) {
+      console.error(e);
+      lbBox.textContent = "Could not load leaderboard (check console).";
+    }
   }
 
   function applyAnswer(isCorrect) {
@@ -346,7 +462,6 @@
     }
     scoreText.textContent = String(score);
 
-    // Win/lose condition by rope reaching ends
     if (ropePos >= 5) {
       answerStatus.textContent += " 🏆 RIGHT team wins!";
       endGame();
@@ -406,7 +521,7 @@
     setStatus("Loading questions...", true);
 
     try {
-      const { url, key } = saveConfig(); // saves + validates
+      const { url, key } = saveConfig();
       const category = catEl.value;
       const limit = Math.max(1, Number(limitEl.value || 10));
 
@@ -432,7 +547,6 @@
   });
 
   restartBtn.addEventListener("click", () => {
-    // keep questions loaded; restart same set
     score = 0;
     currentIndex = 0;
     correctCount = 0;
@@ -461,11 +575,42 @@
       const q = questions[currentIndex];
       const isCorrect = (picked === q.correct_answer);
 
-      // lock options
       optButtons.forEach(b => b.disabled = true);
-
       applyAnswer(isCorrect);
     });
+  });
+
+  submitScoreBtn.addEventListener("click", async () => {
+    try {
+      const name = (playerNameEl.value || "").trim();
+      if (!name) {
+        saveStatus.textContent = "⚠️ Enter your name to submit.";
+        return;
+      }
+
+      const url = localStorage.getItem("SB_URL");
+      const key = localStorage.getItem("SB_KEY");
+      const category = catEl.value;
+
+      if (!url || !key) {
+        saveStatus.textContent = "⚠️ Missing Supabase config.";
+        return;
+      }
+
+      saveStatus.textContent = "Submitting score...";
+      await insertLeaderboard({
+        url,
+        key,
+        payload: { player_name: name, category, score }
+      });
+
+      const top = await fetchTopLeaderboard({ url, key, category, limit: 10 });
+      lbBox.textContent = renderLeaderboardRows(top);
+      saveStatus.textContent = "✅ Submitted to leaderboard!";
+    } catch (e) {
+      console.error(e);
+      saveStatus.textContent = "⚠️ Submit failed. Check console.";
+    }
   });
 
   // Initial UI
